@@ -1,0 +1,60 @@
+{
+    "name": "RayCorp Recruitment - Email Notification",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "raycorp-recruitment",
+                "responseMode": "onReceived",
+                "responseData": "allEntries"
+            },
+            "id": "webhook",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                0,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "it@rayandra.com",
+                "toEmail": "it@rayandra.com",
+                "subject": "=[IT-RECRUITMENT] {{ $json.id }} - {{ $json.nama }} - Score: {{ $json.overallScore }}/10",
+                "emailType": "text",
+                "message": "=═══════════════════════════════════════════\n{{ $json.overallScore >= 8 ? '🟢' : '🟡' }} LAMARAN BARU - IT STAFF DEVELOPER\n═══════════════════════════════════════════\n\n📋 DATA KANDIDAT\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nID Lamaran  : {{ $json.id }}\nNama        : {{ $json.nama }}\nEmail       : {{ $json.email }}\nWhatsApp    : {{ $json.whatsapp }}\nCV          : {{ $json.cvUrl }}\n\n📊 HASIL TEST\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTECHNICAL TEST: {{ $json.technicalScore }}/10\n{{ $json.technicalDetail }}\n\nPSIKOTES: {{ $json.psikotesScore }}/10\n{{ $json.psikotesDetail }}\n\n═══════════════════════════════════════════\n🎯 OVERALL SCORE: {{ $json.overallScore }}/10\n📌 {{ $json.overallScore >= 8 ? 'RECOMMENDED untuk interview' : 'Perlu review lebih lanjut' }}\n═══════════════════════════════════════════\n\nTimestamp: {{ $json.timestamp }}\n\n---\nRayCorp Recruitment System"
+            },
+            "id": "send-email",
+            "name": "Send Email",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2,
+            "position": [
+                300,
+                0
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "YOUR_SMTP_CREDENTIAL_ID",
+                    "name": "Hostinger SMTP"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Send Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    }
+}
