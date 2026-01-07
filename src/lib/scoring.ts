@@ -16,7 +16,7 @@ SOAL 1 (Problem Solving): Error di baris division count($result) ketika kosong. 
 SOAL 2 (Database): Query GROUP BY MONTH dengan WHERE status='completed'. Index: (status, created_at).
 SOAL 3 (Git): git stash → checkout main → hotfix → merge → checkout feature → stash pop. Merge vs Rebase.
 SOAL 4 (Multi-Project): Prioritas deadline terdekat dulu. Komunikasi jika kompleks.
-SOAL 5 (AI): HTTP client, API key di env, Service class. Keamanan: env var, rate limit. Contoh: chatbot, summarization.
+SOAL 5 (n8n Automation): Node: Webhook, HTTP Request/WhatsApp, Google Sheets. Error handling: Error Trigger, IF node. Contoh: auto email, data sync, report generation.
 
 JAWABAN KANDIDAT:
 Soal 1a: ${answers.soal1a}
@@ -82,7 +82,7 @@ function fallbackTechnicalScoring(answers: TechnicalAnswers): TechnicalScores {
   const soal2 = scoreAnswer(answers.soal2a + answers.soal2b, ['select', 'group by', 'month', 'sum', 'index', 'status', 'created_at']);
   const soal3 = scoreAnswer(answers.soal3a + answers.soal3b, ['stash', 'checkout', 'hotfix', 'merge', 'rebase', 'branch']);
   const soal4 = scoreAnswer(answers.soal4a + answers.soal4b, ['prioritas', 'deadline', 'urgent', 'komunikasi', 'stakeholder']);
-  const soal5 = scoreAnswer(answers.soal5a + answers.soal5b + answers.soal5c, ['api', 'env', 'http', 'keamanan', 'rate limit', 'chatbot']);
+  const soal5 = scoreAnswer(answers.soal5a + answers.soal5b + answers.soal5c, ['webhook', 'node', 'trigger', 'http', 'whatsapp', 'google sheets', 'error', 'if', 'automation', 'workflow', 'notifikasi', 'email']);
 
   const total = (soal1 + soal2 + soal3 + soal4 + soal5) / 5;
 

@@ -84,12 +84,17 @@ Hari ini Anda juga diminta bantu onboarding developer baru (estimasi 2 jam).`,
   },
   {
     id: 'soal5',
-    title: 'SOAL 5: AI & Automation',
-    description: `RayCorp ingin membuat sistem otomatis untuk generate deskripsi produk kosmetik menggunakan AI.`,
+    title: 'SOAL 5: Workflow Automation (n8n)',
+    description: `RayCorp menggunakan n8n untuk otomasi workflow. Tim ingin membuat automation: ketika ada order baru di website, sistem otomatis mengirim notifikasi ke WhatsApp admin dan menyimpan data ke Google Sheets.
+
+**Flow yang diinginkan:**
+\`\`\`
+Order Masuk (Webhook) → Kirim WA ke Admin → Simpan ke Google Sheets
+\`\`\``,
     questions: [
-      { id: 'soal5a', label: 'a) Secara konsep, bagaimana mengintegrasikan AI (OpenAI API) ke Laravel?' },
-      { id: 'soal5b', label: 'b) Apa yang perlu diperhatikan dari sisi keamanan dan biaya?' },
-      { id: 'soal5c', label: 'c) Sebutkan 2 contoh lain penggunaan AI untuk efisiensi kerja' }
+      { id: 'soal5a', label: 'a) Jelaskan node-node apa saja yang dibutuhkan di n8n untuk workflow di atas?' },
+      { id: 'soal5b', label: 'b) Bagaimana cara menangani jika salah satu node gagal (error handling)?' },
+      { id: 'soal5c', label: 'c) Sebutkan 2 contoh automation lain yang bisa membantu efisiensi kerja di perusahaan' }
     ]
   }
 ];
