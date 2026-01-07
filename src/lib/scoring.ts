@@ -1,135 +1,162 @@
-import { TechnicalAnswers, PsikotesAnswers, TechnicalScores, PsikotesScores } from './types';
+import { TechnicalAnswers, PsikotesAnswers, TechnicalScores, PsikotesScores, TechnicalScoreDetails, PsikotesScoreDetails } from './types';
+import { technicalAnswerKeys, categoryWeights, questionCategories, psikotesSkenario, psikotesStatements } from './questions';
 
-// Pollinations AI untuk scoring technical test
-export async function scoreTechnicalWithAI(answers: TechnicalAnswers): Promise<TechnicalScores> {
-  const prompt = `Kamu adalah evaluator technical test untuk posisi IT Staff Developer. Evaluasi jawaban kandidat dan berikan skor 1-10 untuk setiap soal.
+// ============================================
+// TECHNICAL SCORING - 100% AKURAT
+// Semua pilihan ganda, tidak ada interpretasi
+// ============================================
 
-KRITERIA:
-- 1-3: Tidak memahami / salah
-- 4-5: Memahami sebagian
-- 6-7: Cukup baik
-- 8-9: Bagus dengan reasoning baik
-- 10: Excellent
-
-KUNCI JAWABAN:
-SOAL 1 (Problem Solving): Error di baris division count($result) ketika kosong. Fix: cek isEmpty() di awal.
-SOAL 2 (Database): Query GROUP BY MONTH dengan WHERE status='completed'. Index: (status, created_at).
-SOAL 3 (Git): git stash → checkout main → hotfix → merge → checkout feature → stash pop. Merge vs Rebase.
-SOAL 4 (Multi-Project): Prioritas deadline terdekat dulu. Komunikasi jika kompleks.
-SOAL 5 (n8n Automation): Node: Webhook, HTTP Request/WhatsApp, Google Sheets. Error handling: Error Trigger, IF node. Contoh: auto email, data sync, report generation.
-
-JAWABAN KANDIDAT:
-Soal 1a: ${answers.soal1a}
-Soal 1b: ${answers.soal1b}
-Soal 2a: ${answers.soal2a}
-Soal 2b: ${answers.soal2b}
-Soal 3a: ${answers.soal3a}
-Soal 3b: ${answers.soal3b}
-Soal 4a: ${answers.soal4a}
-Soal 4b: ${answers.soal4b}
-Soal 5a: ${answers.soal5a}
-Soal 5b: ${answers.soal5b}
-Soal 5c: ${answers.soal5c}
-
-BERIKAN RESPONSE DALAM FORMAT JSON SAJA (tanpa markdown):
-{"soal1":X,"soal2":X,"soal3":X,"soal4":X,"soal5":X,"feedback":["feedback1","feedback2"]}`;
-
-  try {
-    const encodedPrompt = encodeURIComponent(prompt);
-    const response = await fetch(`https://text.pollinations.ai/${encodedPrompt}`, {
-      method: 'GET',
-    });
-    
-    const text = await response.text();
-    
-    // Try to parse JSON from response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      const total = (parsed.soal1 + parsed.soal2 + parsed.soal3 + parsed.soal4 + parsed.soal5) / 5;
-      return {
-        soal1: parsed.soal1 || 5,
-        soal2: parsed.soal2 || 5,
-        soal3: parsed.soal3 || 5,
-        soal4: parsed.soal4 || 5,
-        soal5: parsed.soal5 || 5,
-        total: Math.round(total * 10) / 10,
-        feedback: parsed.feedback || ['Evaluasi selesai']
-      };
-    }
-    
-    // Fallback jika parsing gagal
-    return fallbackTechnicalScoring(answers);
-  } catch (error) {
-    console.error('AI scoring error:', error);
-    return fallbackTechnicalScoring(answers);
-  }
-}
-
-// Fallback scoring jika AI gagal
-function fallbackTechnicalScoring(answers: TechnicalAnswers): TechnicalScores {
-  const scoreAnswer = (answer: string, keywords: string[]): number => {
-    if (!answer || answer.trim().length < 10) return 2;
-    const lowerAnswer = answer.toLowerCase();
-    let score = 4; // Base score
-    keywords.forEach(keyword => {
-      if (lowerAnswer.includes(keyword.toLowerCase())) score += 1;
-    });
-    return Math.min(score, 10);
+export function scoreTechnical(answers: TechnicalAnswers): TechnicalScores {
+  const details: TechnicalScoreDetails = {};
+  
+  // Count correct answers per category
+  const categoryCorrect: Record<string, number> = {
+    php_laravel: 0,
+    mysql_git: 0,
+    problem_solving: 0,
+    ai_automation: 0
+  };
+  
+  const categoryTotal: Record<string, number> = {
+    php_laravel: 5,    // 5 soal
+    mysql_git: 8,      // 4 MySQL + 4 Git
+    problem_solving: 4, // 4 soal
+    ai_automation: 3   // 3 soal
   };
 
-  const soal1 = scoreAnswer(answers.soal1a + answers.soal1b, ['division', 'zero', 'count', 'empty', 'isempty', 'kosong', 'cek', 'if']);
-  const soal2 = scoreAnswer(answers.soal2a + answers.soal2b, ['select', 'group by', 'month', 'sum', 'index', 'status', 'created_at']);
-  const soal3 = scoreAnswer(answers.soal3a + answers.soal3b, ['stash', 'checkout', 'hotfix', 'merge', 'rebase', 'branch']);
-  const soal4 = scoreAnswer(answers.soal4a + answers.soal4b, ['prioritas', 'deadline', 'urgent', 'komunikasi', 'stakeholder']);
-  const soal5 = scoreAnswer(answers.soal5a + answers.soal5b + answers.soal5c, ['webhook', 'node', 'trigger', 'http', 'whatsapp', 'google sheets', 'error', 'if', 'automation', 'workflow', 'notifikasi', 'email']);
+  // Score each question
+  Object.keys(technicalAnswerKeys).forEach(questionId => {
+    const key = questionId as keyof TechnicalAnswers;
+    const userAnswer = answers[key] || '';
+    const correctAnswer = technicalAnswerKeys[questionId].correct;
+    const isCorrect = userAnswer.toUpperCase() === correctAnswer.toUpperCase();
+    
+    // Store detail
+    details[questionId] = {
+      answer: userAnswer,
+      correct: isCorrect,
+      correctAnswer: correctAnswer
+    };
+    
+    // Add to category count
+    const category = questionCategories[questionId];
+    if (isCorrect && category) {
+      categoryCorrect[category]++;
+    }
+  });
 
-  const total = (soal1 + soal2 + soal3 + soal4 + soal5) / 5;
+  // Calculate score per category (0-10 scale)
+  const phpLaravel = Math.round((categoryCorrect.php_laravel / categoryTotal.php_laravel) * 10 * 10) / 10;
+  const mysqlGit = Math.round((categoryCorrect.mysql_git / categoryTotal.mysql_git) * 10 * 10) / 10;
+  const problemSolving = Math.round((categoryCorrect.problem_solving / categoryTotal.problem_solving) * 10 * 10) / 10;
+  const aiAutomation = Math.round((categoryCorrect.ai_automation / categoryTotal.ai_automation) * 10 * 10) / 10;
+
+  // Calculate weighted total
+  // PHP/Laravel: 35%, MySQL/Git: 25%, Problem Solving: 25%, AI: 15%
+  const total = Math.round((
+    (phpLaravel * categoryWeights.php_laravel) +
+    (mysqlGit * categoryWeights.mysql_git) +
+    (problemSolving * categoryWeights.problem_solving) +
+    (aiAutomation * categoryWeights.ai_automation)
+  ) * 10) / 10;
+
+  // Generate feedback
+  const feedback: string[] = [];
+  if (phpLaravel < 6) feedback.push('Perlu improve di PHP/Laravel - ini skill utama yang dibutuhkan');
+  if (mysqlGit < 6) feedback.push('Perlu improve di MySQL & Git');
+  if (problemSolving < 6) feedback.push('Perlu improve di Problem Solving');
+  if (aiAutomation < 6) feedback.push('Familiar dengan AI/Automation akan jadi nilai plus');
+  
+  if (feedback.length === 0) {
+    if (total >= 8) {
+      feedback.push('Technical skill sangat baik!');
+    } else {
+      feedback.push('Technical skill cukup baik');
+    }
+  }
 
   return {
-    soal1, soal2, soal3, soal4, soal5,
-    total: Math.round(total * 10) / 10,
-    feedback: ['Evaluasi menggunakan keyword matching']
+    phpLaravel,
+    mysqlGit,
+    problemSolving,
+    aiAutomation,
+    total,
+    details,
+    feedback
   };
 }
 
-// Rule-based scoring untuk psikotes (lebih konsisten)
+// ============================================
+// PSIKOTES SCORING - RULE-BASED
+// Konsisten dan akurat
+// ============================================
+
 export function scorePsikotes(answers: PsikotesAnswers): PsikotesScores {
-  // Scenario scoring (ideal answers for RayCorp)
-  const scenarioScores: Record<string, Record<string, number>> = {
-    skenario1: { 'A': 2, 'B': 3, 'C': 5, 'D': 3, 'E': 4 },
-    skenario2: { 'A': 3, 'B': 5, 'C': 4, 'D': 2, 'E': 4 },
-    skenario3: { 'A': 1, 'B': 3, 'C': 5, 'D': 4, 'E': 4 }
+  const details: PsikotesScoreDetails = {
+    skenario1: { answer: '', idealAnswer: '', score: 0 },
+    skenario2: { answer: '', idealAnswer: '', score: 0 },
+    skenario3: { answer: '', idealAnswer: '', score: 0 },
+    statements: {},
+    c2: answers.c2,
+    d1: answers.d1,
+    d2: answers.d2
   };
 
-  const s1 = scenarioScores.skenario1[answers.skenario1] || 3;
-  const s2 = scenarioScores.skenario2[answers.skenario2] || 3;
-  const s3 = scenarioScores.skenario3[answers.skenario3] || 3;
+  // Score skenario
+  const skenario1Data = psikotesSkenario.find(s => s.id === 'skenario1')!;
+  const skenario2Data = psikotesSkenario.find(s => s.id === 'skenario2')!;
+  const skenario3Data = psikotesSkenario.find(s => s.id === 'skenario3')!;
+  
+  const s1Score = skenario1Data.scoring[answers.skenario1 as keyof typeof skenario1Data.scoring] || 3;
+  const s2Score = skenario2Data.scoring[answers.skenario2 as keyof typeof skenario2Data.scoring] || 3;
+  const s3Score = skenario3Data.scoring[answers.skenario3 as keyof typeof skenario3Data.scoring] || 3;
+  
+  details.skenario1 = { 
+    answer: answers.skenario1, 
+    idealAnswer: skenario1Data.idealAnswer, 
+    score: s1Score 
+  };
+  details.skenario2 = { 
+    answer: answers.skenario2, 
+    idealAnswer: skenario2Data.idealAnswer, 
+    score: s2Score 
+  };
+  details.skenario3 = { 
+    answer: answers.skenario3, 
+    idealAnswer: skenario3Data.idealAnswer, 
+    score: s3Score 
+  };
 
-  // Dimension calculations (scale 1-5 → 1-10)
-  const multiProjectRaw = (s1 + answers.b1 + answers.b6 + answers.b9) / 4;
-  const multiProject = multiProjectRaw * 2;
+  // Store statement answers
+  psikotesStatements.forEach(stmt => {
+    const key = stmt.id as keyof PsikotesAnswers;
+    details.statements[stmt.id] = answers[key] as number;
+  });
 
-  const learningRaw = (s2 + answers.b2 + answers.b8 + answers.b10) / 4;
-  const learning = learningRaw * 2;
+  // Calculate dimension scores (scale 1-5 → 1-10)
+  const multiProjectRaw = (s1Score + answers.b1 + answers.b6 + answers.b9) / 4;
+  const multiProject = Math.round(multiProjectRaw * 2 * 10) / 10;
 
-  const initiativeRaw = (s3 + answers.b5 + answers.b8) / 3;
-  const initiative = initiativeRaw * 2;
+  const learningRaw = (s2Score + answers.b2 + answers.b8 + answers.b10) / 4;
+  const learning = Math.round(learningRaw * 2 * 10) / 10;
+
+  const initiativeRaw = (s3Score + answers.b5 + answers.b8) / 3;
+  const initiative = Math.round(initiativeRaw * 2 * 10) / 10;
 
   const teamRaw = (answers.b3 + answers.b7) / 2;
-  const team = teamRaw * 2;
+  const team = Math.round(teamRaw * 2 * 10) / 10;
 
-  const changeRaw = (s2 + answers.b4 + answers.b6) / 3;
-  const change = changeRaw * 2;
+  const changeRaw = (s2Score + answers.b4 + answers.b6) / 3;
+  const change = Math.round(changeRaw * 2 * 10) / 10;
 
   // Weighted total
-  const total = (
+  const total = Math.round((
     (multiProject * 0.25) +
     (learning * 0.25) +
     (initiative * 0.20) +
     (team * 0.15) +
     (change * 0.15)
-  );
+  ) * 10) / 10;
 
   // Generate feedback
   let feedback = '';
@@ -144,14 +171,25 @@ export function scorePsikotes(answers: PsikotesAnswers): PsikotesScores {
   }
 
   return {
-    multiProject: Math.round(multiProject * 10) / 10,
-    learning: Math.round(learning * 10) / 10,
-    initiative: Math.round(initiative * 10) / 10,
-    team: Math.round(team * 10) / 10,
-    change: Math.round(change * 10) / 10,
-    total: Math.round(total * 10) / 10,
-    feedback
+    multiProject,
+    learning,
+    initiative,
+    team,
+    change,
+    total,
+    feedback,
+    details
   };
+}
+
+// ============================================
+// OVERALL SCORING
+// Technical: 70%, Psikotes: 30%
+// ============================================
+
+export function calculateOverallScore(technicalTotal: number, psikotesTotal: number): number {
+  // Technical 70%, Psikotes 30%
+  return Math.round(((technicalTotal * 0.7) + (psikotesTotal * 0.3)) * 10) / 10;
 }
 
 // Generate unique ID
@@ -159,4 +197,14 @@ export function generateId(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `RC-${timestamp}${random}`;
+}
+
+// Convert file to base64 for storage
+export async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
 }

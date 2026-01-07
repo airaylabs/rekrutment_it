@@ -6,6 +6,12 @@ interface Step4Props {
   result: FinalResult;
 }
 
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins} menit ${secs} detik`;
+}
+
 export default function Step4Result({ result }: Step4Props) {
   return (
     <div className="card p-8 max-w-3xl mx-auto">
@@ -22,11 +28,39 @@ export default function Step4Result({ result }: Step4Props) {
         <p className="text-sm text-gray-500">Simpan ID ini untuk referensi</p>
       </div>
 
-      {/* Score Preview (tanpa status lulus/tidak) */}
+      {/* Score Preview */}
       <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg p-6 mb-6 text-center border border-blue-500/30">
         <p className="text-gray-400 text-sm mb-1">Skor Anda</p>
         <p className="text-5xl font-bold text-white">{result.overallScore}<span className="text-2xl text-gray-400">/10</span></p>
+        <p className="text-xs text-gray-500 mt-2">Technical (70%) + Psikotes (30%)</p>
       </div>
+
+      {/* Timer Info */}
+      {result.timer && (
+        <div className="bg-slate-900/50 rounded-lg p-4 mb-6">
+          <h3 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
+            ⏱️ Waktu Pengerjaan
+          </h3>
+          <div className="grid grid-cols-4 gap-2 text-center text-sm">
+            <div className="bg-slate-800 rounded p-2">
+              <p className="text-gray-400 text-xs">Data Diri</p>
+              <p className="text-white font-medium">{formatDuration(result.timer.personalDuration)}</p>
+            </div>
+            <div className="bg-slate-800 rounded p-2">
+              <p className="text-gray-400 text-xs">Technical</p>
+              <p className="text-white font-medium">{formatDuration(result.timer.technicalDuration)}</p>
+            </div>
+            <div className="bg-slate-800 rounded p-2">
+              <p className="text-gray-400 text-xs">Psikotes</p>
+              <p className="text-white font-medium">{formatDuration(result.timer.psikotesDuration)}</p>
+            </div>
+            <div className="bg-blue-500/20 rounded p-2">
+              <p className="text-blue-400 text-xs">Total</p>
+              <p className="text-white font-bold">{formatDuration(result.timer.totalDuration)}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detail Scores */}
       <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -40,25 +74,34 @@ export default function Step4Result({ result }: Step4Props) {
           </h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
+              <span className="text-gray-400">PHP/Laravel</span>
+              <span className={`${result.technical.phpLaravel >= 7 ? 'text-green-400' : 'text-yellow-400'}`}>
+                {result.technical.phpLaravel}/10
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">MySQL & Git</span>
+              <span className={`${result.technical.mysqlGit >= 7 ? 'text-green-400' : 'text-yellow-400'}`}>
+                {result.technical.mysqlGit}/10
+              </span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-gray-400">Problem Solving</span>
-              <span className="text-white">{result.technical.soal1}/10</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Database</span>
-              <span className="text-white">{result.technical.soal2}/10</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Git</span>
-              <span className="text-white">{result.technical.soal3}/10</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Multi-Project</span>
-              <span className="text-white">{result.technical.soal4}/10</span>
+              <span className={`${result.technical.problemSolving >= 7 ? 'text-green-400' : 'text-yellow-400'}`}>
+                {result.technical.problemSolving}/10
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">AI & Automation</span>
-              <span className="text-white">{result.technical.soal5}/10</span>
+              <span className={`${result.technical.aiAutomation >= 7 ? 'text-green-400' : 'text-yellow-400'}`}>
+                {result.technical.aiAutomation}/10
+              </span>
             </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-slate-700">
+            <p className="text-xs text-gray-500">
+              Bobot: PHP/Laravel 35%, MySQL/Git 25%, Problem Solving 25%, AI 15%
+            </p>
           </div>
         </div>
 
@@ -72,7 +115,7 @@ export default function Step4Result({ result }: Step4Props) {
           </h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-400">Multi-Project Adaptability</span>
+              <span className="text-gray-400">Multi-Project</span>
               <span className="text-white">{result.psikotes.multiProject}/10</span>
             </div>
             <div className="flex justify-between">
@@ -95,7 +138,7 @@ export default function Step4Result({ result }: Step4Props) {
         </div>
       </div>
 
-      {/* Next Steps - Netral */}
+      {/* Next Steps */}
       <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
           📋 Langkah Selanjutnya

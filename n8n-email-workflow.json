@@ -1,60 +1,55 @@
 {
-    "name": "RayCorp Recruitment - Email Notification",
-    "nodes": [
-        {
-            "parameters": {
-                "httpMethod": "POST",
-                "path": "raycorp-recruitment",
-                "responseMode": "onReceived",
-                "responseData": "allEntries"
-            },
-            "id": "webhook",
-            "name": "Webhook",
-            "type": "n8n-nodes-base.webhook",
-            "typeVersion": 1,
-            "position": [
-                0,
-                0
-            ]
-        },
-        {
-            "parameters": {
-                "fromEmail": "it@rayandra.com",
-                "toEmail": "it@rayandra.com",
-                "subject": "=[IT-RECRUITMENT] {{ $json.id }} - {{ $json.nama }} - Score: {{ $json.overallScore }}/10",
-                "emailType": "text",
-                "message": "=═══════════════════════════════════════════\n{{ $json.overallScore >= 8 ? '🟢' : '🟡' }} LAMARAN BARU - IT STAFF DEVELOPER\n═══════════════════════════════════════════\n\n📋 DATA KANDIDAT\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nID Lamaran  : {{ $json.id }}\nNama        : {{ $json.nama }}\nEmail       : {{ $json.email }}\nWhatsApp    : {{ $json.whatsapp }}\nCV          : {{ $json.cvUrl }}\n\n📊 HASIL TEST\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTECHNICAL TEST: {{ $json.technicalScore }}/10\n{{ $json.technicalDetail }}\n\nPSIKOTES: {{ $json.psikotesScore }}/10\n{{ $json.psikotesDetail }}\n\n═══════════════════════════════════════════\n🎯 OVERALL SCORE: {{ $json.overallScore }}/10\n📌 {{ $json.overallScore >= 8 ? 'RECOMMENDED untuk interview' : 'Perlu review lebih lanjut' }}\n═══════════════════════════════════════════\n\nTimestamp: {{ $json.timestamp }}\n\n---\nRayCorp Recruitment System"
-            },
-            "id": "send-email",
-            "name": "Send Email",
-            "type": "n8n-nodes-base.emailSend",
-            "typeVersion": 2,
-            "position": [
-                300,
-                0
-            ],
-            "credentials": {
-                "smtp": {
-                    "id": "YOUR_SMTP_CREDENTIAL_ID",
-                    "name": "Hostinger SMTP"
-                }
-            }
-        }
-    ],
-    "connections": {
-        "Webhook": {
-            "main": [
-                [
-                    {
-                        "node": "Send Email",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        }
+  "name": "RayCorp Recruitment - Email Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "raycorp-recruitment",
+        "responseMode": "onReceived",
+        "responseData": "allEntries"
+      },
+      "id": "webhook-1",
+      "name": "Webhook - Receive Application",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
     },
-    "settings": {
-        "executionOrder": "v1"
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_USER }}",
+        "toEmail": "it@rayandra.com",
+        "subject": "=[IT-RECRUITMENT] {{ $json.nama }} - Score: {{ $json.overallScore }}/10 - {{ $json.status }}",
+        "emailType": "html",
+        "html": "=<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; padding: 20px; }\n    .container { max-width: 600px; margin: 0 auto; background: #16213e; border-radius: 10px; padding: 30px; }\n    .header { text-align: center; border-bottom: 2px solid #0f3460; padding-bottom: 20px; margin-bottom: 20px; }\n    .header h1 { color: #4da8da; margin: 0; }\n    .header .score { font-size: 48px; font-weight: bold; color: {{ $json.overallScore >= 8 ? '#4ade80' : '#facc15' }}; }\n    .section { background: #0f3460; border-radius: 8px; padding: 15px; margin-bottom: 15px; }\n    .section h3 { color: #4da8da; margin-top: 0; border-bottom: 1px solid #1a1a2e; padding-bottom: 10px; }\n    .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1a1a2e; }\n    .row:last-child { border-bottom: none; }\n    .label { color: #9ca3af; }\n    .value { color: #fff; font-weight: bold; }\n    .score-good { color: #4ade80; }\n    .score-warning { color: #facc15; }\n    .score-bad { color: #f87171; }\n    .followup { background: {{ $json.priority === 'HIGH' ? '#166534' : $json.priority === 'MEDIUM' ? '#1e40af' : $json.priority === 'LOW' ? '#854d0e' : '#7f1d1d' }}; border-radius: 8px; padding: 15px; margin-top: 20px; }\n    .followup h3 { color: #fff; margin-top: 0; }\n    .btn { display: inline-block; background: #4da8da; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 5px; }\n    .btn-wa { background: #25d366; }\n    .btn-admin { background: #8b5cf6; }\n    .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>🎯 LAMARAN BARU</h1>\n      <p style=\"color: #9ca3af;\">IT Staff Developer</p>\n      <div class=\"score\">{{ $json.overallScore }}/10</div>\n      <p style=\"color: {{ $json.overallScore >= 8 ? '#4ade80' : '#facc15' }}; font-size: 18px;\">{{ $json.status }}</p>\n    </div>\n\n    <div class=\"section\">\n      <h3>👤 DATA KANDIDAT</h3>\n      <div class=\"row\"><span class=\"label\">ID Lamaran</span><span class=\"value\">{{ $json.id }}</span></div>\n      <div class=\"row\"><span class=\"label\">Nama</span><span class=\"value\">{{ $json.nama }}</span></div>\n      <div class=\"row\"><span class=\"label\">Email</span><span class=\"value\">{{ $json.email }}</span></div>\n      <div class=\"row\"><span class=\"label\">WhatsApp</span><span class=\"value\">{{ $json.whatsapp }}</span></div>\n      <div class=\"row\"><span class=\"label\">CV</span><span class=\"value\">{{ $json.cvFileName || 'Lihat di Admin' }}</span></div>\n    </div>\n\n    <div class=\"section\">\n      <h3>💻 TECHNICAL TEST (70%)</h3>\n      <div class=\"row\"><span class=\"label\">Total Score</span><span class=\"value {{ $json.technicalScore >= 8 ? 'score-good' : 'score-warning' }}\">{{ $json.technicalScore }}/10</span></div>\n      <div class=\"row\"><span class=\"label\">PHP/Laravel (35%)</span><span class=\"value\">{{ $json.phpLaravel }}/10</span></div>\n      <div class=\"row\"><span class=\"label\">MySQL & Git (25%)</span><span class=\"value\">{{ $json.mysqlGit }}/10</span></div>\n      <div class=\"row\"><span class=\"label\">Problem Solving (25%)</span><span class=\"value\">{{ $json.problemSolving }}/10</span></div>\n      <div class=\"row\"><span class=\"label\">AI/Automation (15%)</span><span class=\"value\">{{ $json.aiAutomation }}/10</span></div>\n    </div>\n\n    <div class=\"section\">\n      <h3>🧠 PSIKOTES (30%)</h3>\n      <div class=\"row\"><span class=\"label\">Total Score</span><span class=\"value {{ $json.psikotesScore >= 8 ? 'score-good' : 'score-warning' }}\">{{ $json.psikotesScore }}/10</span></div>\n      <div class=\"row\"><span class=\"label\">Multi-Project</span><span class=\"value\">{{ $json.multiProject }}/10</span></div>\n      <div class=\"row\"><span class=\"label\">Learning Agility</span><span class=\"value\">{{ $json.learning }}/10</span></div>\n      <div class=\"row\"><span class=\"label\">Initiative</span><span class=\"value\">{{ $json.initiative }}/10</span></div>\n      <div class=\"row\"><span class=\"label\">Team Collaboration</span><span class=\"value\">{{ $json.team }}/10</span></div>\n      <div class=\"row\"><span class=\"label\">Change Tolerance</span><span class=\"value\">{{ $json.change }}/10</span></div>\n    </div>\n\n    <div class=\"section\">\n      <h3>⏱️ WAKTU PENGERJAAN</h3>\n      <div class=\"row\"><span class=\"label\">Data Diri</span><span class=\"value\">{{ $json.timer?.personal || '-' }}</span></div>\n      <div class=\"row\"><span class=\"label\">Technical Test</span><span class=\"value\">{{ $json.timer?.technical || '-' }}</span></div>\n      <div class=\"row\"><span class=\"label\">Psikotes</span><span class=\"value\">{{ $json.timer?.psikotes || '-' }}</span></div>\n      <div class=\"row\"><span class=\"label\">Total Waktu</span><span class=\"value\" style=\"color: #4da8da;\">{{ $json.timer?.total || '-' }}</span></div>\n      <div class=\"row\"><span class=\"label\">Evaluasi Kecepatan</span><span class=\"value\">{{ $json.speedEval || '-' }}</span></div>\n    </div>\n\n    <div class=\"followup\">\n      <h3>📋 REKOMENDASI FOLLOW-UP</h3>\n      <p style=\"font-size: 16px; margin: 0;\">{{ $json.followUp }}</p>\n    </div>\n\n    <div style=\"text-align: center; margin-top: 20px;\">\n      <a href=\"{{ $json.whatsappLink }}\" class=\"btn btn-wa\">💬 WhatsApp Kandidat</a>\n      <a href=\"{{ $json.adminLink }}\" class=\"btn btn-admin\">🔐 Buka Admin Dashboard</a>\n    </div>\n\n    <div class=\"footer\">\n      <p>Email ini dikirim otomatis oleh RayCorp Recruitment System</p>\n      <p>{{ $json.timestamp }}</p>\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "email-1",
+      "name": "Send Email - Admin Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [500, 300],
+      "credentials": {
+        "smtp": {
+          "id": "YOUR_SMTP_CREDENTIAL_ID",
+          "name": "SMTP Account"
+        }
+      }
     }
+  ],
+  "connections": {
+    "Webhook - Receive Application": {
+      "main": [
+        [
+          {
+            "node": "Send Email - Admin Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
 }
